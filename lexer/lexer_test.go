@@ -10,8 +10,8 @@ import (
 )
 
 func TestLexer(t *testing.T) {
-	code := `let add = fn(a, b) {
-  return a + b;
+	code := `let add = fn(丢, b) {
+  return 丢 + b;
 };`
 
 	dir, file := mustWriteTempFile("", code, t)
@@ -58,7 +58,7 @@ func TestLexer(t *testing.T) {
 			File:   file,
 			Line:   1,
 			Col:    14,
-			String: "a",
+			String: "丢",
 		},
 		&lexer.Token{
 			Type:   lexer.COMMA,
@@ -100,7 +100,7 @@ func TestLexer(t *testing.T) {
 			File:   file,
 			Line:   2,
 			Col:    10,
-			String: "a",
+			String: "丢",
 		},
 		&lexer.Token{
 			Type:   lexer.PLUS,
