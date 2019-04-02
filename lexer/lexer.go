@@ -16,10 +16,15 @@ type Lexer struct {
 	filename string
 	r        *bufio.Reader
 	closer   io.Closer
-	line     int
-	col      int
-	currune  rune
-	prerune  rune
+
+	line int
+	col  int
+
+	currune rune
+	prerune rune
+
+	curtok *Token
+	nxttok *Token
 }
 
 // New returns a new instance of a Monkey language lexer.
@@ -53,6 +58,40 @@ func (l *Lexer) Close() error {
 
 // Next returns the next Token from the input.
 func (l *Lexer) Next() (*Token, error) {
+	if l.nxttok != nil {
+		l.curtok = l.nxttok
+		l.nxttok = nil
+		return l.curtok, nil
+	}
+
+	tok, err := l.readTok()
+	if err != nil {
+		return nil, err
+	}
+
+	l.curtok = tok
+
+	return tok, nil
+}
+
+// Peak returns the next Token without reading past it.
+func (l *Lexer) Peak() (*Token, error) {
+	if l.nxttok != nil {
+		return l.nxttok, nil
+	}
+
+	tok, err := l.readTok()
+	if err != nil {
+		return nil, err
+	}
+
+	l.nxttok = tok
+
+	return tok, nil
+}
+
+// readTok reads in the next token from input.
+func (l *Lexer) readTok() (*Token, error) {
 	if err := l.skipSpace(); err != nil {
 		if err != io.EOF {
 			return nil, l.lexErr(err)
@@ -112,6 +151,9 @@ func (l *Lexer) readIdentTok(unread bool) (*Token, error) {
 	for {
 		r, err := l.readRune()
 		if err != nil {
+			if err == io.EOF {
+				break
+			}
 			return nil, l.lexErr(err)
 		}
 		if !isLetter(r) && !isDigit(r) {

@@ -9,7 +9,7 @@ import (
 	"github.com/dgnorton/monkey/lexer"
 )
 
-func TestLexer(t *testing.T) {
+func TestLexer_Next(t *testing.T) {
 	code := `let add = fn(丢, b) {
   return 丢 + b;
 };`
@@ -165,6 +165,104 @@ func TestLexer(t *testing.T) {
 		if tok.EOF() {
 			break
 		}
+	}
+}
+
+func TestLexer_Peak(t *testing.T) {
+	code := `let add`
+
+	dir, file := mustWriteTempFile("", code, t)
+	defer os.RemoveAll(dir)
+
+	tok1 := &lexer.Token{
+		Type:   lexer.LET,
+		File:   file,
+		Line:   1,
+		Col:    1,
+		String: "let",
+	}
+
+	tok2 := &lexer.Token{
+		Type:   lexer.IDENT,
+		File:   file,
+		Line:   1,
+		Col:    5,
+		String: "add",
+	}
+
+	tok3 := &lexer.Token{
+		Type:   lexer.EOF,
+		File:   file,
+		Line:   1,
+		Col:    7,
+		String: "",
+	}
+
+	lex, err := lexer.Open(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lex.Close()
+
+	// Test peaking the first token in the input.
+	tok, err := lex.Peak()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(tok, tok1) {
+		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok1, tok)
+	}
+
+	// Read the first token from input and make sure it's the same
+	// as we peaked before.
+	if tok, err = lex.Next(); err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(tok, tok1) {
+		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok1, tok)
+	}
+
+	// Peak the second token in the input.
+	tok, err = lex.Peak()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(tok, tok2) {
+		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok2, tok)
+	}
+
+	// Peak the second token again and make sure it hasn't changed
+	// since peaking it before.
+	tok, err = lex.Peak()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(tok, tok2) {
+		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok2, tok)
+	}
+
+	// Read the second token in the input and make sure it's the same
+	// as the token peaked before.
+	if tok, err = lex.Next(); err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(tok, tok2) {
+		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok2, tok)
+	}
+
+	// Peak the last (EOF) token from the input.
+	tok, err = lex.Peak()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(tok, tok3) {
+		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok3, tok)
 	}
 }
 
