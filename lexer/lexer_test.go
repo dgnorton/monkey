@@ -103,7 +103,7 @@ func TestLexer_Next(t *testing.T) {
 			String: "丢",
 		},
 		&lexer.Token{
-			Type:   lexer.PLUS,
+			Type:   lexer.ADD,
 			File:   file,
 			Line:   2,
 			Col:    12,
@@ -263,6 +263,195 @@ func TestLexer_Peak(t *testing.T) {
 
 	if !reflect.DeepEqual(tok, tok3) {
 		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok3, tok)
+	}
+}
+
+func TestLexer_Operators(t *testing.T) {
+	code := `=+-*/!<>`
+
+	dir, file := mustWriteTempFile("", code, t)
+	defer os.RemoveAll(dir)
+
+	exps := []*lexer.Token{
+		&lexer.Token{
+			Type:   lexer.ASSIGN,
+			File:   file,
+			Line:   1,
+			Col:    1,
+			String: "=",
+		},
+		&lexer.Token{
+			Type:   lexer.ADD,
+			File:   file,
+			Line:   1,
+			Col:    2,
+			String: "+",
+		},
+		&lexer.Token{
+			Type:   lexer.SUB,
+			File:   file,
+			Line:   1,
+			Col:    3,
+			String: "-",
+		},
+		&lexer.Token{
+			Type:   lexer.MUL,
+			File:   file,
+			Line:   1,
+			Col:    4,
+			String: "*",
+		},
+		&lexer.Token{
+			Type:   lexer.DIV,
+			File:   file,
+			Line:   1,
+			Col:    5,
+			String: "/",
+		},
+		&lexer.Token{
+			Type:   lexer.NOT,
+			File:   file,
+			Line:   1,
+			Col:    6,
+			String: "!",
+		},
+		&lexer.Token{
+			Type:   lexer.LT,
+			File:   file,
+			Line:   1,
+			Col:    7,
+			String: "<",
+		},
+		&lexer.Token{
+			Type:   lexer.GT,
+			File:   file,
+			Line:   1,
+			Col:    8,
+			String: ">",
+		},
+		&lexer.Token{
+			Type:   lexer.EOF,
+			File:   file,
+			Line:   1,
+			Col:    8,
+			String: "",
+		},
+	}
+
+	lex, err := lexer.Open(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	gots := make([]*lexer.Token, 0, len(exps))
+	for i := 0; ; i++ {
+		got, err := lex.Next()
+		if err != nil {
+			t.Fatal(err)
+		}
+		gots = append(gots, got)
+		if !reflect.DeepEqual(exps[i], got) {
+			t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", exps[i], got)
+		}
+
+		if got.EOF() {
+			break
+		}
+	}
+
+	if len(gots) != len(exps) {
+		t.Fatalf("exp %d tokens, got %d", len(exps), len(gots))
+	}
+}
+
+func TestLexer_Keywords(t *testing.T) {
+	code := `fn let true false if else return`
+
+	dir, file := mustWriteTempFile("", code, t)
+	defer os.RemoveAll(dir)
+
+	exps := []*lexer.Token{
+		&lexer.Token{
+			Type:   lexer.FN,
+			File:   file,
+			Line:   1,
+			Col:    1,
+			String: "fn",
+		},
+		&lexer.Token{
+			Type:   lexer.LET,
+			File:   file,
+			Line:   1,
+			Col:    4,
+			String: "let",
+		},
+		&lexer.Token{
+			Type:   lexer.TRUE,
+			File:   file,
+			Line:   1,
+			Col:    8,
+			String: "true",
+		},
+		&lexer.Token{
+			Type:   lexer.FALSE,
+			File:   file,
+			Line:   1,
+			Col:    13,
+			String: "false",
+		},
+		&lexer.Token{
+			Type:   lexer.IF,
+			File:   file,
+			Line:   1,
+			Col:    19,
+			String: "if",
+		},
+		&lexer.Token{
+			Type:   lexer.ELSE,
+			File:   file,
+			Line:   1,
+			Col:    22,
+			String: "else",
+		},
+		&lexer.Token{
+			Type:   lexer.RETURN,
+			File:   file,
+			Line:   1,
+			Col:    27,
+			String: "return",
+		},
+		&lexer.Token{
+			Type:   lexer.EOF,
+			File:   file,
+			Line:   1,
+			Col:    32,
+			String: "",
+		},
+	}
+
+	lex, err := lexer.Open(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	gots := make([]*lexer.Token, 0, len(exps))
+	for i := 0; ; i++ {
+		got, err := lex.Next()
+		if err != nil {
+			t.Fatal(err)
+		}
+		gots = append(gots, got)
+		if !reflect.DeepEqual(exps[i], got) {
+			t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", exps[i], got)
+		}
+
+		if got.EOF() {
+			break
+		}
+	}
+
+	if len(gots) != len(exps) {
+		t.Fatalf("exp %d tokens, got %d", len(exps), len(gots))
 	}
 }
 

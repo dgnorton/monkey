@@ -116,7 +116,25 @@ func (l *Lexer) readTok() (*Token, error) {
 		return l.newTok(ASSIGN, "=")
 	case '+':
 		r, _ = l.readRune()
-		return l.newTok(PLUS, "+")
+		return l.newTok(ADD, "+")
+	case '-':
+		r, _ = l.readRune()
+		return l.newTok(SUB, "-")
+	case '*':
+		r, _ = l.readRune()
+		return l.newTok(MUL, "*")
+	case '/':
+		r, _ = l.readRune()
+		return l.newTok(DIV, "/")
+	case '!':
+		r, _ = l.readRune()
+		return l.newTok(NOT, "!")
+	case '<':
+		r, _ = l.readRune()
+		return l.newTok(LT, "<")
+	case '>':
+		r, _ = l.readRune()
+		return l.newTok(GT, ">")
 	case '(':
 		r, _ = l.readRune()
 		return l.newTok(LPAREN, "(")
@@ -310,7 +328,13 @@ const (
 
 	// Operators
 	ASSIGN // '='
-	PLUS   // '+'
+	ADD    // '+'
+	SUB    // '-'
+	MUL    // '*'
+	DIV    // '/'
+	NOT    // '!'
+	LT     // '<'
+	GT     // '>'
 
 	// Delimeters
 	SEMICOLON // ';'
@@ -323,9 +347,13 @@ const (
 	COMMA     // ','
 
 	// Keywords
+	ELSE
+	FALSE
 	FN
+	IF
 	LET
 	RETURN
+	TRUE
 )
 
 // String returns a string representation of the token type.
@@ -341,8 +369,20 @@ func (t TokenType) String() string {
 		return "INT"
 	case ASSIGN:
 		return "ASSIGN"
-	case PLUS:
-		return "PLUS"
+	case ADD:
+		return "ADD"
+	case SUB:
+		return "SUB"
+	case MUL:
+		return "MUL"
+	case DIV:
+		return "DIV"
+	case NOT:
+		return "NOT"
+	case LT:
+		return "LT"
+	case GT:
+		return "GT"
 	case SEMICOLON:
 		return "SEMICOLON"
 	case LPAREN:
@@ -359,12 +399,20 @@ func (t TokenType) String() string {
 		return "RSQUARE"
 	case COMMA:
 		return "COMMA"
+	case ELSE:
+		return "ELSE"
+	case FALSE:
+		return "FALSE"
 	case FN:
 		return "FN"
+	case IF:
+		return "IF"
 	case LET:
 		return "LET"
 	case RETURN:
 		return "RETURN"
+	case TRUE:
+		return "TRUE"
 	default:
 		return "INVALID TOKEN TYPE"
 	}
@@ -437,9 +485,13 @@ func isDigit(r rune) bool {
 
 // keywords is a map of Monkey language keywords to token types.
 var keywords = map[string]TokenType{
+	"else":   ELSE,
+	"false":  FALSE,
 	"fn":     FN,
+	"if":     IF,
 	"let":    LET,
 	"return": RETURN,
+	"true":   TRUE,
 }
 
 // lookupIdentType returns the keyword token type for the identifier or IDENT
