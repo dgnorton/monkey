@@ -21,7 +21,7 @@ type Lexer struct {
 	col  int
 
 	currune rune
-	prerune rune
+	nxtrune rune
 
 	curtok *Token
 	nxttok *Token
@@ -99,7 +99,7 @@ func (l *Lexer) readTok() (*Token, error) {
 		return l.newTok(EOF, "")
 	}
 
-	r, err := l.readRune()
+	r, err := l.peakRune()
 	if err != nil {
 		if err != io.EOF {
 			return nil, l.lexErr(err)
@@ -109,59 +109,64 @@ func (l *Lexer) readTok() (*Token, error) {
 
 	switch r {
 	case ';':
+		r, _ = l.readRune()
 		return l.newTok(SEMICOLON, ";")
 	case '=':
+		r, _ = l.readRune()
 		return l.newTok(ASSIGN, "=")
 	case '+':
+		r, _ = l.readRune()
 		return l.newTok(PLUS, "+")
 	case '(':
+		r, _ = l.readRune()
 		return l.newTok(LPAREN, "(")
 	case ')':
+		r, _ = l.readRune()
 		return l.newTok(RPAREN, ")")
 	case '{':
+		r, _ = l.readRune()
 		return l.newTok(LBRACE, "{")
 	case '}':
+		r, _ = l.readRune()
 		return l.newTok(RBRACE, "}")
 	case '[':
+		r, _ = l.readRune()
 		return l.newTok(LSQUARE, "[")
 	case ']':
+		r, _ = l.readRune()
 		return l.newTok(RSQUARE, "]")
 	case ',':
+		r, _ = l.readRune()
 		return l.newTok(COMMA, ",")
 	default:
 		if isLetter(r) {
-			return l.readIdentTok(true)
+			return l.readIdentTok()
 		} else if isDigit(r) {
-			return l.readNumTok(true)
+			return l.readNumTok()
 		}
 		return l.newTok(ILLEGAL, string(r))
 	}
 }
 
 // readIdentTok reads and returns an identifier token.
-func (l *Lexer) readIdentTok(unread bool) (*Token, error) {
-	if unread {
-		if err := l.unreadRune(); err != nil {
-			return nil, l.lexErr(err)
-		}
-	}
-
+func (l *Lexer) readIdentTok() (*Token, error) {
 	startCol := l.col
 	var sb strings.Builder
+
 	for {
-		r, err := l.readRune()
+		r, err := l.peakRune()
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
 			return nil, l.lexErr(err)
 		}
+
 		if !isLetter(r) && !isDigit(r) {
-			if err := l.unreadRune(); err != nil {
-				return nil, l.lexErr(err)
-			}
 			break
 		}
+
+		r, _ = l.readRune()
 		if _, err := sb.WriteRune(r); err != nil {
 			return nil, l.lexErr(err)
 		}
@@ -177,12 +182,7 @@ func (l *Lexer) readIdentTok(unread bool) (*Token, error) {
 }
 
 // readNumTok reads and returns any supported type of number token.
-func (l *Lexer) readNumTok(unread bool) (*Token, error) {
-	if unread {
-		if err := l.unreadRune(); err != nil {
-			return nil, l.lexErr(err)
-		}
-	}
+func (l *Lexer) readNumTok() (*Token, error) {
 	// TODO: add float support?
 	return l.readIntTok()
 }
@@ -190,17 +190,21 @@ func (l *Lexer) readNumTok(unread bool) (*Token, error) {
 // readIntTok reads and returns an integer token.
 func (l *Lexer) readIntTok() (*Token, error) {
 	var sb strings.Builder
+
 	for {
-		r, err := l.readRune()
+		r, err := l.peakRune()
 		if err != nil {
+			if err == io.EOF {
+				break
+			}
 			return nil, l.lexErr(err)
 		}
+
 		if !isDigit(r) {
-			if err := l.unreadRune(); err != nil {
-				return nil, l.lexErr(err)
-			}
 			break
 		}
+
+		r, _ = l.readRune()
 		if _, err := sb.WriteRune(r); err != nil {
 			return nil, l.lexErr(err)
 		}
@@ -223,71 +227,63 @@ func (l *Lexer) newTok(t TokenType, s string) (*Token, error) {
 	if t == ILLEGAL {
 		err = l.lexErr(fmt.Errorf("invalid token: %s", s))
 	}
-	line := l.line
-	if l.prerune == '\n' {
-		line--
-	}
-	return NewToken(t, l.filename, line, l.col-1, s), err
+	return NewToken(t, l.filename, l.line, l.col-1, s), err
 }
 
-// readRune returns the next non-whitespace rune.
+// readRune returns the next rune.
 func (l *Lexer) readRune() (rune, error) {
-	r, _, err := l.r.ReadRune()
-	if err != nil {
-		return 0, err
+	if l.nxtrune != 0 {
+		l.currune = l.nxtrune
+		l.nxtrune = 0
+	} else {
+		r, _, err := l.r.ReadRune()
+		if err != nil {
+			return 0, err
+		}
+
+		l.currune = r
 	}
-	l.prerune = l.currune
-	l.currune = r
 
 	l.col++
-	if r == '\n' {
+	if l.currune == '\n' {
 		l.line++
 		l.col = 1
 	}
 
-	return r, nil
+	return l.currune, nil
 }
 
-// unreadRune unreads a rune.
-func (l *Lexer) unreadRune() error {
-	err := l.r.UnreadRune()
+// peakRune returns the next rune that would be returned by readRune() but
+// leaves it in the input stream.
+func (l *Lexer) peakRune() (rune, error) {
+	if l.nxtrune != 0 {
+		return l.nxtrune, nil
+	}
+
+	r, _, err := l.r.ReadRune()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	l.col--
-	if l.currune == '\n' {
-		l.line--
-	}
+	l.nxtrune = r
 
-	l.currune = l.prerune
-	l.prerune = 0
-
-	return nil
+	return r, nil
 }
 
 // skipSpace advances the lexer past whitespace.
 func (l *Lexer) skipSpace() error {
 	for {
-		r, _, err := l.r.ReadRune()
+		r, err := l.peakRune()
 		if err != nil {
 			return err
 		}
 
-		if r == '\n' {
-			l.line++
-			l.col = 1
-			continue
-		}
-
 		if !unicode.IsSpace(r) {
-			break
+			return nil
 		}
 
-		l.col++
+		r, _ = l.readRune()
 	}
-
-	return l.r.UnreadRune()
 }
 
 // lexErr returns a lexer error.
