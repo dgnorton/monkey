@@ -99,7 +99,7 @@ func (l *Lexer) readTok() (*Token, error) {
 		return l.newTok(EOF, "", 0, 0)
 	}
 
-	r, err := l.peakRune()
+	r, err := l.readRune()
 	if err != nil {
 		if err != io.EOF {
 			return nil, l.lexErr(err)
@@ -110,11 +110,8 @@ func (l *Lexer) readTok() (*Token, error) {
 	switch r {
 	case ';', '+', '-', '*', '/', '<', '>',
 		'(', ')', '{', '}', '[', ']', ',':
-		l.readRune()
 		return l.newTok(runeTokenTypes[r], string(r), 0, 0)
 	case '=':
-		l.readRune()
-
 		if r, err = l.peakRune(); err != nil && err != io.EOF {
 			return nil, l.lexErr(err)
 		}
@@ -127,8 +124,6 @@ func (l *Lexer) readTok() (*Token, error) {
 
 		return l.newTok(ASSIGN, "=", 0, 0)
 	case '!':
-		l.readRune()
-
 		if r, err = l.peakRune(); err != nil && err != io.EOF {
 			return nil, l.lexErr(err)
 		}
@@ -152,8 +147,12 @@ func (l *Lexer) readTok() (*Token, error) {
 
 // readIdentTok reads and returns an identifier token.
 func (l *Lexer) readIdentTok() (*Token, error) {
-	startCol := l.col
 	var sb strings.Builder
+
+	startCol := l.col - 1
+	if _, err := sb.WriteRune(l.currune); err != nil {
+		return nil, l.lexErr(err)
+	}
 
 	for {
 		r, err := l.peakRune()
@@ -193,6 +192,11 @@ func (l *Lexer) readNumTok() (*Token, error) {
 func (l *Lexer) readIntTok() (*Token, error) {
 	var sb strings.Builder
 
+	startCol := l.col - 1
+	if _, err := sb.WriteRune(l.currune); err != nil {
+		return nil, l.lexErr(err)
+	}
+
 	for {
 		r, err := l.peakRune()
 		if err != nil {
@@ -219,6 +223,7 @@ func (l *Lexer) readIntTok() (*Token, error) {
 
 	tok, _ := l.newTok(INT, sb.String(), 0, 0)
 	tok.Int = i
+	tok.Col = startCol
 
 	return tok, nil
 }
