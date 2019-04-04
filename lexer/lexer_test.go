@@ -159,7 +159,7 @@ func TestLexer_Next(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(exp[i], tok) {
-			t.Fatalf("tokens don't match:\nexp:\n\t%v\ngot:\n\t%v", exp[i], tok)
+			t.Fatalf("tokens don't match:\nexp: %v\ngot: %v", exp[i], tok)
 		}
 
 		if tok.EOF() {
@@ -211,7 +211,7 @@ func TestLexer_Peak(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(tok, tok1) {
-		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok1, tok)
+		t.Fatalf("tokens don't match:\nexp: %v\ngot: %v", tok1, tok)
 	}
 
 	// Read the first token from input and make sure it's the same
@@ -221,7 +221,7 @@ func TestLexer_Peak(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(tok, tok1) {
-		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok1, tok)
+		t.Fatalf("tokens don't match:\nexp: %v\ngot: %v", tok1, tok)
 	}
 
 	// Peak the second token in the input.
@@ -231,7 +231,7 @@ func TestLexer_Peak(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(tok, tok2) {
-		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok2, tok)
+		t.Fatalf("tokens don't match:\nexp: %v\ngot: %v", tok2, tok)
 	}
 
 	// Peak the second token again and make sure it hasn't changed
@@ -242,7 +242,7 @@ func TestLexer_Peak(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(tok, tok2) {
-		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok2, tok)
+		t.Fatalf("tokens don't match:\nexp: %v\ngot: %v", tok2, tok)
 	}
 
 	// Read the second token in the input and make sure it's the same
@@ -252,7 +252,7 @@ func TestLexer_Peak(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(tok, tok2) {
-		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok2, tok)
+		t.Fatalf("tokens don't match:\nexp: %v\ngot: %v", tok2, tok)
 	}
 
 	// Peak the last (EOF) token from the input.
@@ -262,7 +262,7 @@ func TestLexer_Peak(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(tok, tok3) {
-		t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", tok3, tok)
+		t.Fatalf("tokens don't match:\nexp: %v\ngot: %v", tok3, tok)
 	}
 }
 
@@ -365,7 +365,7 @@ func TestLexer_Operators(t *testing.T) {
 		}
 		gots = append(gots, got)
 		if !reflect.DeepEqual(exps[i], got) {
-			t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", exps[i], got)
+			t.Fatalf("tokens don't match:\nexp: %v\ngot: %v", exps[i], got)
 		}
 
 		if got.EOF() {
@@ -456,7 +456,7 @@ func TestLexer_Keywords(t *testing.T) {
 		}
 		gots = append(gots, got)
 		if !reflect.DeepEqual(exps[i], got) {
-			t.Fatalf("tokens don't match:\n\texp: %v\n\tgot: %v", exps[i], got)
+			t.Fatalf("tokens don't match:\nexp: %v\ngot: %v", exps[i], got)
 		}
 
 		if got.EOF() {
