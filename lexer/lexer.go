@@ -108,54 +108,13 @@ func (l *Lexer) readTok() (*Token, error) {
 	}
 
 	switch r {
-	case ';':
-		r, _ = l.readRune()
-		return l.newTok(SEMICOLON, ";")
+	case ';', '+', '-', '*', '/', '!', '<', '>',
+		'(', ')', '{', '}', '[', ']', ',':
+		l.readRune()
+		return l.newTok(runeTokenTypes[r], string(r))
 	case '=':
-		r, _ = l.readRune()
+		l.readRune()
 		return l.newTok(ASSIGN, "=")
-	case '+':
-		r, _ = l.readRune()
-		return l.newTok(ADD, "+")
-	case '-':
-		r, _ = l.readRune()
-		return l.newTok(SUB, "-")
-	case '*':
-		r, _ = l.readRune()
-		return l.newTok(MUL, "*")
-	case '/':
-		r, _ = l.readRune()
-		return l.newTok(DIV, "/")
-	case '!':
-		r, _ = l.readRune()
-		return l.newTok(NOT, "!")
-	case '<':
-		r, _ = l.readRune()
-		return l.newTok(LT, "<")
-	case '>':
-		r, _ = l.readRune()
-		return l.newTok(GT, ">")
-	case '(':
-		r, _ = l.readRune()
-		return l.newTok(LPAREN, "(")
-	case ')':
-		r, _ = l.readRune()
-		return l.newTok(RPAREN, ")")
-	case '{':
-		r, _ = l.readRune()
-		return l.newTok(LBRACE, "{")
-	case '}':
-		r, _ = l.readRune()
-		return l.newTok(RBRACE, "}")
-	case '[':
-		r, _ = l.readRune()
-		return l.newTok(LSQUARE, "[")
-	case ']':
-		r, _ = l.readRune()
-		return l.newTok(RSQUARE, "]")
-	case ',':
-		r, _ = l.readRune()
-		return l.newTok(COMMA, ",")
 	default:
 		if isLetter(r) {
 			return l.readIdentTok()
@@ -481,6 +440,25 @@ func isLetter(r rune) bool {
 // isDigit returns true if the rune is a valid numeric digit.
 func isDigit(r rune) bool {
 	return '0' <= r && r <= '9' || r >= utf8.RuneSelf && unicode.IsDigit(r)
+}
+
+// runeTokenTypes maps single runes to a TokenType
+var runeTokenTypes = []TokenType{
+	'+': ADD,
+	'-': SUB,
+	'*': MUL,
+	'/': DIV,
+	'!': NOT,
+	'<': LT,
+	'>': GT,
+	';': SEMICOLON,
+	'(': LPAREN,
+	')': RPAREN,
+	'{': LBRACE,
+	'}': RBRACE,
+	'[': LSQUARE,
+	']': RSQUARE,
+	',': COMMA,
 }
 
 // keywords is a map of Monkey language keywords to token types.
