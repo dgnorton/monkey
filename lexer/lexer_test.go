@@ -267,7 +267,7 @@ func TestLexer_Peak(t *testing.T) {
 }
 
 func TestLexer_Operators(t *testing.T) {
-	code := `=+-*/!<>`
+	code := `=+-*/!<>==!=`
 
 	dir, file := mustWriteTempFile("", code, t)
 	defer os.RemoveAll(dir)
@@ -330,10 +330,24 @@ func TestLexer_Operators(t *testing.T) {
 			String: ">",
 		},
 		&lexer.Token{
+			Type:   lexer.EQ,
+			File:   file,
+			Line:   1,
+			Col:    9,
+			String: "==",
+		},
+		&lexer.Token{
+			Type:   lexer.NEQ,
+			File:   file,
+			Line:   1,
+			Col:    11,
+			String: "!=",
+		},
+		&lexer.Token{
 			Type:   lexer.EOF,
 			File:   file,
 			Line:   1,
-			Col:    8,
+			Col:    12,
 			String: "",
 		},
 	}

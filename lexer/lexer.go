@@ -96,7 +96,7 @@ func (l *Lexer) readTok() (*Token, error) {
 		if err != io.EOF {
 			return nil, l.lexErr(err)
 		}
-		return l.newTok(EOF, "")
+		return l.newTok(EOF, "", 0, 0)
 	}
 
 	r, err := l.peakRune()
@@ -104,24 +104,49 @@ func (l *Lexer) readTok() (*Token, error) {
 		if err != io.EOF {
 			return nil, l.lexErr(err)
 		}
-		return l.newTok(EOF, "")
+		return l.newTok(EOF, "", 0, 0)
 	}
 
 	switch r {
-	case ';', '+', '-', '*', '/', '!', '<', '>',
+	case ';', '+', '-', '*', '/', '<', '>',
 		'(', ')', '{', '}', '[', ']', ',':
 		l.readRune()
-		return l.newTok(runeTokenTypes[r], string(r))
+		return l.newTok(runeTokenTypes[r], string(r), 0, 0)
 	case '=':
 		l.readRune()
-		return l.newTok(ASSIGN, "=")
+
+		if r, err = l.peakRune(); err != nil && err != io.EOF {
+			return nil, l.lexErr(err)
+		}
+
+		if r == '=' {
+			line, col := l.line, l.col
+			l.readRune()
+			return l.newTok(EQ, "==", line, col)
+		}
+
+		return l.newTok(ASSIGN, "=", 0, 0)
+	case '!':
+		l.readRune()
+
+		if r, err = l.peakRune(); err != nil && err != io.EOF {
+			return nil, l.lexErr(err)
+		}
+
+		if r == '=' {
+			line, col := l.line, l.col
+			l.readRune()
+			return l.newTok(NEQ, "!=", line, col)
+		}
+
+		return l.newTok(NOT, "!", 0, 0)
 	default:
 		if isLetter(r) {
 			return l.readIdentTok()
 		} else if isDigit(r) {
 			return l.readNumTok()
 		}
-		return l.newTok(ILLEGAL, string(r))
+		return l.newTok(ILLEGAL, string(r), 0, 0)
 	}
 }
 
@@ -152,7 +177,7 @@ func (l *Lexer) readIdentTok() (*Token, error) {
 	ident := sb.String()
 	tokType := lookupIdentType(ident)
 
-	tok, _ := l.newTok(tokType, ident)
+	tok, _ := l.newTok(tokType, ident, 0, 0)
 	tok.Col = startCol
 
 	return tok, nil
@@ -192,19 +217,28 @@ func (l *Lexer) readIntTok() (*Token, error) {
 		return nil, err
 	}
 
-	tok, _ := l.newTok(INT, sb.String())
+	tok, _ := l.newTok(INT, sb.String(), 0, 0)
 	tok.Int = i
 
 	return tok, nil
 }
 
 // newToken returns a new Token.
-func (l *Lexer) newTok(t TokenType, s string) (*Token, error) {
+func (l *Lexer) newTok(t TokenType, s string, line, col int) (*Token, error) {
 	var err error
 	if t == ILLEGAL {
 		err = l.lexErr(fmt.Errorf("invalid token: %s", s))
 	}
-	return NewToken(t, l.filename, l.line, l.col-1, s), err
+
+	if line == 0 {
+		line = l.line
+	}
+
+	if col == 0 {
+		col = l.col
+	}
+
+	return NewToken(t, l.filename, line, col-1, s), err
 }
 
 // readRune returns the next rune.
@@ -287,6 +321,8 @@ const (
 
 	// Operators
 	ASSIGN // '='
+	EQ     // "=="
+	NEQ    // "!="
 	ADD    // '+'
 	SUB    // '-'
 	MUL    // '*'
@@ -328,6 +364,10 @@ func (t TokenType) String() string {
 		return "INT"
 	case ASSIGN:
 		return "ASSIGN"
+	case EQ:
+		return "EQ"
+	case NEQ:
+		return "NEQ"
 	case ADD:
 		return "ADD"
 	case SUB:
@@ -448,7 +488,6 @@ var runeTokenTypes = []TokenType{
 	'-': SUB,
 	'*': MUL,
 	'/': DIV,
-	'!': NOT,
 	'<': LT,
 	'>': GT,
 	';': SEMICOLON,
