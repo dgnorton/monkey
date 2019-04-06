@@ -74,8 +74,8 @@ func (l *Lexer) Next() (*Token, error) {
 	return tok, nil
 }
 
-// Peak returns the next Token without reading past it.
-func (l *Lexer) Peak() (*Token, error) {
+// Peek returns the next Token without reading past it.
+func (l *Lexer) Peek() (*Token, error) {
 	if l.nxttok != nil {
 		return l.nxttok, nil
 	}

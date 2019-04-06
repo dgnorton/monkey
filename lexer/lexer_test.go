@@ -168,7 +168,7 @@ func TestLexer_Next(t *testing.T) {
 	}
 }
 
-func TestLexer_Peak(t *testing.T) {
+func TestLexer_Peek(t *testing.T) {
 	code := `let add`
 
 	dir, file := mustWriteTempFile("", code, t)
@@ -205,7 +205,7 @@ func TestLexer_Peak(t *testing.T) {
 	defer lex.Close()
 
 	// Test peaking the first token in the input.
-	tok, err := lex.Peak()
+	tok, err := lex.Peek()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -224,8 +224,8 @@ func TestLexer_Peak(t *testing.T) {
 		t.Fatalf("tokens don't match:\nexp: %v\ngot: %v", tok1, tok)
 	}
 
-	// Peak the second token in the input.
-	tok, err = lex.Peak()
+	// Peek the second token in the input.
+	tok, err = lex.Peek()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -234,9 +234,9 @@ func TestLexer_Peak(t *testing.T) {
 		t.Fatalf("tokens don't match:\nexp: %v\ngot: %v", tok2, tok)
 	}
 
-	// Peak the second token again and make sure it hasn't changed
+	// Peek the second token again and make sure it hasn't changed
 	// since peaking it before.
-	tok, err = lex.Peak()
+	tok, err = lex.Peek()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -255,8 +255,8 @@ func TestLexer_Peak(t *testing.T) {
 		t.Fatalf("tokens don't match:\nexp: %v\ngot: %v", tok2, tok)
 	}
 
-	// Peak the last (EOF) token from the input.
-	tok, err = lex.Peak()
+	// Peek the last (EOF) token from the input.
+	tok, err = lex.Peek()
 	if err != nil {
 		t.Fatal(err)
 	}
