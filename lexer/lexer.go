@@ -216,7 +216,7 @@ func (l *Lexer) readIntTok() (*Token, error) {
 		}
 	}
 
-	i, err := strconv.Atoi(sb.String())
+	i, err := strconv.ParseInt(sb.String(), 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -354,6 +354,7 @@ const (
 	LET
 	RETURN
 	TRUE
+	MAXTOKTYPE = TRUE
 )
 
 // String returns a string representation of the token type.
@@ -429,7 +430,7 @@ type Token struct {
 	Line   int
 	Col    int
 	String string
-	Int    int
+	Int    int64
 }
 
 // NewToken returns a new Token with only the String value set.
@@ -446,7 +447,7 @@ func NewToken(t TokenType, filename string, line, col int, s string) *Token {
 // NewIntToken returns a new Token with both the String and equivalent Int
 // values set.
 func NewIntToken(filename string, line, col int, s string) (*Token, error) {
-	i, err := strconv.Atoi(s)
+	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return nil, err
 	}
